@@ -20,7 +20,7 @@ class SteeringAgent;
 
 // --- Cell ---
 // ------------
-struct Cell
+struct Cell final
 {
 	Cell(float left, float bottom, float width, float height);
 
@@ -33,7 +33,7 @@ struct Cell
 
 // --- Partitioned Space ---
 // -------------------------
-class CellSpace
+class CellSpace final
 {
 public:
 	CellSpace(float width, float height, int rows, int cols, int maxEntities);

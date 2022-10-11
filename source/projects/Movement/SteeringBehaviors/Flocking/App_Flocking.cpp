@@ -33,10 +33,14 @@ void App_Flocking::Update(float deltaTime)
 		m_MouseTarget.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
 	}
 
+	m_TrimWorldSize = m_pFlock->GetWorldTrimSize();
+	if (!m_pFlock->GetWorldTrim()) m_TrimWorldSize = 0;
 	m_pFlock->UpdateAndRenderUI();
 	m_pFlock->Update(deltaTime);
 	if (m_UseMouseTarget)
 		m_pFlock->SetTarget_Seek(m_MouseTarget);
+
+
 }
 
 void App_Flocking::Render(float deltaTime) const

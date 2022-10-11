@@ -17,7 +17,7 @@ SteeringOutput Cohesion::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
 
-	if (pAgent->CanRenderBehavior())
+	if (pAgent->CanRenderBehavior() && m_DebugRender)
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, steering.LinearVelocity.Magnitude(), { 0,1,0 });
 
 	return steering;
@@ -55,7 +55,7 @@ SteeringOutput Separation::CalculateSteering(float deltaT, SteeringAgent* pAgent
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
 
-	if (pAgent->CanRenderBehavior())
+	if (pAgent->CanRenderBehavior() && m_DebugRender)
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, steering.LinearVelocity.Magnitude(), { 0,1,0 });
 
 	return steering;
@@ -73,7 +73,7 @@ SteeringOutput VelocityMatch::CalculateSteering(float deltaT, SteeringAgent* pAg
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
 
-	if (pAgent->CanRenderBehavior())
+	if (pAgent->CanRenderBehavior() && m_DebugRender)
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, steering.LinearVelocity.Magnitude(), { 0,1,0 });
 
 	return steering;

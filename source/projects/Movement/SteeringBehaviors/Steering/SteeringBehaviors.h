@@ -26,12 +26,15 @@ public:
 	//Seek Functions
 	void SetTarget(const TargetData& target) { m_Target = target; }
 
+	void SetDebugRender(bool newValue) { m_DebugRender = newValue; }
+
 	template<class T, typename std::enable_if<std::is_base_of<ISteeringBehavior, T>::value>::type* = nullptr>
 	T* As()
 	{ return static_cast<T*>(this); }
 
 protected:
 	TargetData m_Target;
+	bool m_DebugRender = true;
 };
 #pragma endregion
 
@@ -52,7 +55,7 @@ public:
 ///////////////////////////////////////
 //FLEE
 //****
-class Flee : public ISteeringBehavior
+class Flee final: public ISteeringBehavior
 {
 public:
 	Flee() = default;
@@ -66,7 +69,7 @@ public:
 ///////////////////////////////////////
 //ARRIVE
 //****
-class Arrive : public ISteeringBehavior
+class Arrive final: public ISteeringBehavior
 {
 public:
 	Arrive() = default;
@@ -79,7 +82,7 @@ public:
 ///////////////////////////////////////
 //FACE
 //****
-class Face : public ISteeringBehavior
+class Face final: public ISteeringBehavior
 {
 public:
 	Face() = default;
@@ -92,7 +95,7 @@ public:
 ///////////////////////////////////////
 //WANDER
 //****
-class Wander : public ISteeringBehavior
+class Wander final: public ISteeringBehavior
 {
 public:
 	Wander() = default;
@@ -105,7 +108,7 @@ public:
 ///////////////////////////////////////
 //PURSUIT
 //****
-class Pursuit : public ISteeringBehavior
+class Pursuit final: public ISteeringBehavior
 {
 public:
 	Pursuit() = default;
@@ -119,7 +122,7 @@ public:
 ///////////////////////////////////////
 //EVADE
 //****
-class Evade : public ISteeringBehavior
+class Evade final: public ISteeringBehavior
 {
 public:
 	Evade() = default;

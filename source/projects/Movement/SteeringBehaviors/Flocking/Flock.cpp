@@ -63,6 +63,12 @@ Flock::Flock(
 	m_pAgentToEvade->SetBodyColor(Color{ 1,0,0 });
 
 	m_pCellSpace = new CellSpace(worldSize, worldSize, 15, 15, m_FlockSize);
+
+	for (auto pAgent : m_Agents)
+	{
+		m_pCellSpace->AddAgent(pAgent);
+	}
+
 }
 
 Flock::~Flock()
@@ -101,11 +107,35 @@ void Flock::Update(float deltaT)
 	m_pEvadeBehavior->SetTarget(m_pAgentToEvade->GetPosition());
 	m_pAgentToEvade->Update(deltaT);
 
-	for (auto pAgent : m_Agents)
+	for (BlendedSteering::WeightedBehavior& weightedBehavior : m_pBlendedSteering->GetWeightedBehaviorsRef())
 	{
-		RegisterNeighbors(pAgent);
-		pAgent->Update(deltaT);
+		if (weightedBehavior.weight == 0.f)
+			weightedBehavior.pBehavior->SetDebugRender(false);
+		else
+			weightedBehavior.pBehavior->SetDebugRender(m_DebugRendering);
 	}
+
+
+	if (m_UsingSpacePartitioning)
+	{
+		for (int idx{}; idx < m_Agents.size(); ++idx)
+		{
+			m_pCellSpace->UpdateAgentCell(m_Agents[idx], m_OldPositions[idx]);
+			m_pCellSpace->RegisterNeighbors(m_Agents[idx], m_NeighborhoodRadius);
+			m_Agents[idx]->Update(deltaT);
+
+			m_OldPositions[idx] = m_Agents[idx]->GetPosition();
+		}
+	}
+	else
+	{
+		for (auto pAgent : m_Agents)
+		{
+			RegisterNeighbors(pAgent);
+			pAgent->Update(deltaT);
+		}
+	}
+
 
 	if (m_TrimWorld)
 	{
@@ -123,12 +153,20 @@ void Flock::Render(float deltaT)
 	// TODO: render the flock
 	m_pAgentToEvade->Render(deltaT);
 
+
+	if (m_DebugRendering)
+	{
+		DEBUGRENDERER2D->DrawCircle(m_Agents[0]->GetPosition(), m_NeighborhoodRadius, { 1,0,0 }, 0.9f);
+		m_Agents[0]->SetRenderBehavior(true);
+	}
+	else
+		m_Agents[0]->SetRenderBehavior(false);
+
 	for (auto pAgent : m_Agents)
 	{
 		pAgent->Render(deltaT);
 	}
 
-	DEBUGRENDERER2D->DrawCircle(m_Agents[1]->GetPosition(), m_NeighborhoodRadius, {1,0,0}, 0.9f);
 
 }
 
@@ -167,16 +205,24 @@ void Flock::UpdateAndRenderUI()
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	ImGui::Text("Flocking");
-	ImGui::Spacing();
+	//ImGui::Text("Flocking");
+	//ImGui::Spacing();
 
 	// TODO: Implement checkboxes for debug rendering and weight sliders here
+
 
 	ImGui::SliderFloat("Seeking", &m_pBlendedSteering->GetWeightedBehaviorsRef()[0].weight, 0.f, 1.f, "%.2");
 	ImGui::SliderFloat("Separation", &m_pBlendedSteering->GetWeightedBehaviorsRef()[1].weight, 0.f, 1.f, "%.2");
 	ImGui::SliderFloat("Cohesion", &m_pBlendedSteering->GetWeightedBehaviorsRef()[2].weight, 0.f, 1.f, "%.2");
 	ImGui::SliderFloat("VelMatch", &m_pBlendedSteering->GetWeightedBehaviorsRef()[3].weight, 0.f, 1.f, "%.2");
 	ImGui::SliderFloat("Wander", &m_pBlendedSteering->GetWeightedBehaviorsRef()[4].weight, 0.f, 1.f, "%.2");
+
+	ImGui::Checkbox("Debug Rendering", &m_DebugRendering);
+	ImGui::Checkbox("Trim World", &m_TrimWorld);
+	ImGui::SliderFloat("Trim Size", &m_WorldSize, 50.f, 200.f, "%.2");
+
+	ImGui::Checkbox("Using Space Partitioning", &m_UsingSpacePartitioning);
+	ImGui::Checkbox("Draw debug for Space Partitioning", &m_DebugSpacePartitioning);
 
 	//End
 	ImGui::PopAllowKeyboardFocus(); 
@@ -186,27 +232,58 @@ void Flock::UpdateAndRenderUI()
 
 void Flock::RegisterNeighbors(SteeringAgent* pAgent)
 {
-	// TODO COMPLETED: Implement
-	m_Neighbors.clear();
-	m_Neighbors.resize(0);
-	m_NrOfNeighbors = 0;
-
-	Elite::Vector2 agentPos{ pAgent->GetPosition() };
-
-	for (auto pAgentPotNbr : m_Agents)
+	if (m_UsingSpacePartitioning)
 	{
-		if (pAgentPotNbr != pAgent)
-		{
-			Elite::Vector2 agentPotNbrPos{ pAgentPotNbr->GetPosition() };
+		m_pCellSpace->RegisterNeighbors(pAgent, m_NeighborhoodRadius);
+	}
+	else
+	{
+		// TODO COMPLETED: Implement
+		m_Neighbors.clear();
+		m_Neighbors.resize(0);
+		m_NrOfNeighbors = 0;
 
-			if (m_NeighborhoodRadius * m_NeighborhoodRadius >=
-				(agentPotNbrPos.x - agentPos.x) * (agentPotNbrPos.x - agentPos.x) +
-				(agentPotNbrPos.y - agentPos.y) * (agentPotNbrPos.y - agentPos.y))
+		Elite::Vector2 agentPos{ pAgent->GetPosition() };
+
+		for (auto pAgentPotNbr : m_Agents)
+		{
+			if (pAgentPotNbr != pAgent)
 			{
-				m_Neighbors.push_back(pAgentPotNbr);
-				++m_NrOfNeighbors;
+				Elite::Vector2 agentPotNbrPos{ pAgentPotNbr->GetPosition() };
+
+				if (m_NeighborhoodRadius * m_NeighborhoodRadius >=
+					(agentPotNbrPos.x - agentPos.x) * (agentPotNbrPos.x - agentPos.x) +
+					(agentPotNbrPos.y - agentPos.y) * (agentPotNbrPos.y - agentPos.y))
+				{
+					m_Neighbors.push_back(pAgentPotNbr);
+					++m_NrOfNeighbors;
+				}
 			}
 		}
+	}
+}
+
+int Flock::GetNrOfNeighbors() const
+{
+	if (m_UsingSpacePartitioning)
+	{
+		return m_pCellSpace->GetNrOfNeighbors();
+	}
+	else
+	{
+		return m_NrOfNeighbors;
+	}
+}
+
+const std::vector<SteeringAgent*>& Flock::GetNeighbors() const
+{
+	if (m_UsingSpacePartitioning)
+	{
+		return m_pCellSpace->GetNeighbors();
+	}
+	else
+	{
+		return m_Neighbors;
 	}
 }
 

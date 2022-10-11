@@ -24,14 +24,16 @@ public:
 	void Render(float deltaT);
 
 	void RegisterNeighbors(SteeringAgent* pAgent);
-	int GetNrOfNeighbors() const { return m_NrOfNeighbors; }
-	const std::vector<SteeringAgent*>& GetNeighbors() const { return m_Neighbors; }
+	int GetNrOfNeighbors() const;
+	const std::vector<SteeringAgent*>& GetNeighbors() const;
 
 	Elite::Vector2 GetAverageNeighborPos() const;
 	Elite::Vector2 GetAverageNeighborVelocity() const;
 
 	void SetTarget_Seek(TargetData target);
 	void SetWorldTrimSize(float size) { m_WorldSize = size; }
+	float GetWorldTrimSize() const { return m_WorldSize; }
+	bool GetWorldTrim() const { return m_TrimWorld; }
 
 private:
 	//Datamembers
@@ -47,7 +49,12 @@ private:
 
 	SteeringAgent* m_pAgentToEvade = nullptr;
 
+	bool m_UsingSpacePartitioning = false;
+	bool m_DebugSpacePartitioning = true;
 	CellSpace* m_pCellSpace = nullptr;
+	std::vector<Elite::Vector2> m_OldPositions;
+
+	bool m_DebugRendering = true;
 	
 	//Steering Behaviors
 	Seek* m_pSeekBehavior = nullptr;

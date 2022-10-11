@@ -4,7 +4,7 @@ class Flock;
 
 //COHESION - FLOCKING
 //*******************
-class Cohesion : public Seek
+class Cohesion final: public Seek
 {
 public:
 	Cohesion(Flock* pFlock) :m_pFlock(pFlock) {};
@@ -18,7 +18,7 @@ private:
 
 //SEPARATION - FLOCKING
 //*********************
-class Separation : public Seek
+class Separation final: public Seek
 {
 public:
 	Separation(Flock* pFlock) :m_pFlock(pFlock) {};
@@ -32,7 +32,7 @@ private:
 
 //VELOCITY MATCH - FLOCKING
 //************************
-class VelocityMatch : public Seek
+class VelocityMatch final: public Seek
 {
 public:
 	VelocityMatch(Flock* pFlock) :m_pFlock(pFlock) {};

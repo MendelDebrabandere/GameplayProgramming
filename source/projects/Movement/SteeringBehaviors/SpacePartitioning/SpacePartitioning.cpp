@@ -1,9 +1,15 @@
 #include "stdafx.h"
 #include "SpacePartitioning.h"
 #include "projects\Movement\SteeringBehaviors\SteeringAgent.h"
+#include <iostream>
 
 // --- Cell ---
 // ------------
+Cell::Cell()
+{
+	std::cout << "Cell default constructor\n";
+}
+
 Cell::Cell(float left, float bottom, float width, float height)
 {
 	boundingBox.bottomLeft = { left, bottom };
@@ -39,16 +45,15 @@ CellSpace::CellSpace(float width, float height, int rows, int cols, int maxEntit
 	, m_Neighbors(maxEntities)
 	, m_NrOfNeighbors(0)
 {
-	m_Cells.resize(m_NrOfRows * m_NrOfCols);
-	float cellWidth{ width / cols };
-	float cellHeight{ height / rows };
+	m_CellWidth = width / float(cols);
+	m_CellHeight = height / float(rows);
 
 	for (int idx{}; idx < m_NrOfRows * m_NrOfCols; ++idx)
 	{
-		m_Cells.push_back(Cell{ (idx % cols) * cellWidth,
-								(idx % rows) * cellHeight,
-								cellWidth,
-								cellHeight });
+		m_Cells.push_back(Cell{ (idx % cols) * m_CellWidth,
+								(idx / cols) * m_CellHeight,
+								m_CellWidth,
+								m_CellHeight });
 	}
 }
 
@@ -71,12 +76,53 @@ void CellSpace::UpdateAgentCell(SteeringAgent* agent, Elite::Vector2 oldPos)
 
 }
 
-void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius)
+void CellSpace::RegisterNeighbors(SteeringAgent* agent, float queryRadius, bool debug)
 {
-	Elite::Vector2 bottomLeft{ agent->GetPosition().x - queryRadius, agent->GetPosition().y - queryRadius };
-	Elite::Rect queryBox{ bottomLeft, queryRadius * 2, queryRadius * 2 };
+	m_Neighbors.clear();
+	m_NrOfNeighbors = 0;
 
-	
+	Elite::Vector2 bottomLeftPos{ agent->GetPosition().x - queryRadius, agent->GetPosition().y - queryRadius };
+	queryRadius *= 2;
+
+	int topLeft{ PositionToIndex(bottomLeftPos + Elite::Vector2{0, queryRadius}) };
+	int topRight{ PositionToIndex(bottomLeftPos + Elite::Vector2{queryRadius, queryRadius}) };
+	int bottomLeft{ PositionToIndex(bottomLeftPos)};
+	int bottomRight{ PositionToIndex(bottomLeftPos + Elite::Vector2{queryRadius, 0}) };
+
+	// (infinite loop)
+	for (int idx{}; idx < 1000000; ++idx)
+	{
+		if (debug && agent->CanRenderBehavior())
+		{
+			Elite::Polygon polygon{ m_Cells[topLeft + idx].GetRectPoints()};
+			DEBUGRENDERER2D->DrawPolygon(&polygon, Elite::Color{ 0,1,0 });
+		}
+
+
+		for (auto pAgent : m_Cells[topLeft + idx].agents)
+		{
+			if ((pAgent->GetPosition() - agent->GetPosition()).Magnitude() <= queryRadius/2)
+			{
+				m_Neighbors.push_back(pAgent);
+				++m_NrOfNeighbors;
+				if (agent->CanRenderBehavior())
+				{
+					DEBUGRENDERER2D->DrawCircle(pAgent->GetPosition(), 1, Elite::Color{ 0,1,0 }, 0.9f);
+					//pAgent->SetBodyColor(Elite::Color(0, 1, 0));
+				}
+			}
+		}
+
+		if (topLeft + idx == bottomRight)
+			break;
+		if (topLeft + idx == topRight)
+		{
+			topLeft -= m_NrOfCols;
+			topRight -= m_NrOfCols;
+			idx = -1;
+			continue;
+		}
+	}
 }
 
 void CellSpace::EmptyCells()
@@ -87,24 +133,89 @@ void CellSpace::EmptyCells()
 
 void CellSpace::RenderCells() const
 {
-
+	for (int idx{}; idx < m_NrOfCols; idx++)
+	{
+		DEBUGRENDERER2D->DrawDirection(	Elite::Vector2{ idx * m_CellWidth, 0 },
+										Elite::Vector2{ 0, 1 },
+										m_SpaceHeight,
+										Elite::Color{ 230,230,250 },
+										0.9f);
+	}
+	for (int idx{}; idx < m_NrOfRows; idx++)
+	{
+		DEBUGRENDERER2D->DrawDirection(	Elite::Vector2{ 0, idx * m_CellHeight },
+										Elite::Vector2{ 1, 0 },
+										m_SpaceWidth,
+										Elite::Color{ 230,230,250 },
+										0.9f);
+	}
 }
 
 int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 {
-	int idx{};
-	for (int column{}; pos.x < m_Cells[column].boundingBox.bottomLeft.x; ++column)
+	for (int idx{}; idx < m_Cells.size(); ++idx)
 	{
-		idx = column;
+		Elite::Rect rect{ m_Cells[idx].boundingBox};
+
+		if (pos.x >= rect.bottomLeft.x && pos.x <= rect.bottomLeft.x + rect.width)
+		{
+			if (pos.y >= rect.bottomLeft.y && pos.y <= rect.bottomLeft.y + rect.height)
+			{
+				return idx;
+			}
+		}
 	}
 
-	int rowCounter{};
-	for (int row{}; pos.y > m_Cells[idx + row * m_NrOfCols].boundingBox.bottomLeft.y; ++row)
+	// point is out of bounds horizontal
+	if (pos.x <= 0 || pos.x >= m_SpaceWidth)
 	{
-		rowCounter = row;
+		for (int idx{}; idx < m_Cells.size(); ++idx)
+		{
+			Elite::Rect rect{ m_Cells[idx].boundingBox };
+			if (pos.y >= rect.bottomLeft.y && pos.y <= rect.bottomLeft.y + rect.height)
+			{
+				if (pos.x <= 0)
+				{
+					return idx;
+				}
+				else
+				{
+					return idx + m_NrOfCols - 1;
+				}
+			}
+		}
 	}
 
-	idx += rowCounter * m_NrOfCols;
+	// point is out of bounds vertical
+	if (pos.y <= 0 || pos.y >= m_SpaceHeight)
+	{
+		for (int idx{}; idx < m_Cells.size(); ++idx)
+		{
+			Elite::Rect rect{ m_Cells[idx].boundingBox };
+			if (pos.x >= rect.bottomLeft.x && pos.x <= rect.bottomLeft.x + rect.width)
+			{
+				if (pos.y <= 0)
+				{
+					return idx;
+				}
+				else
+				{
+					return idx + m_NrOfCols * (m_NrOfRows-1);
+				}
+			}
+		}
+	}
 
-	return idx;
+	//bottomLeft
+	if (pos.x <= 0 && pos.y <= 0)
+		return 0;
+	//bottomRight
+	else if (pos.x >= m_SpaceWidth && pos.y <= 0)
+		return m_NrOfCols - 1;
+	//topLeft
+	else if (pos.x <= 0 && pos.y >= m_SpaceHeight)
+		return m_Cells.size() - m_NrOfCols + 1;
+	//topRight
+	else if (pos.x >= m_SpaceWidth && pos.y >= m_SpaceHeight)
+		return m_Cells.size() - 1;
 }

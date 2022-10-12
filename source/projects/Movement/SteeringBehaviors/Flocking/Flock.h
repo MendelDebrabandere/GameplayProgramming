@@ -50,7 +50,7 @@ private:
 	SteeringAgent* m_pAgentToEvade = nullptr;
 
 	bool m_UsingSpacePartitioning = false;
-	bool m_DebugSpacePartitioning = true;
+	bool m_DebugSpacePartitioning = false;
 	CellSpace* m_pCellSpace = nullptr;
 	std::vector<Elite::Vector2> m_OldPositions;
 

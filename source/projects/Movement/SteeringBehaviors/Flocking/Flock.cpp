@@ -54,7 +54,7 @@ Flock::Flock(
 		m_Agents[i]->SetMass(0.3f);
 		m_Agents[i]->SetBodyColor(Color{ 1, 1, 1 });
 	}
-
+	
 	m_pAgentToEvade = new SteeringAgent();
 	m_pAgentToEvade->SetSteeringBehavior(m_pWanderBehavior);
 	m_pAgentToEvade->SetMaxLinearSpeed(30.f);
@@ -62,11 +62,17 @@ Flock::Flock(
 	m_pAgentToEvade->SetMass(0.1f);
 	m_pAgentToEvade->SetBodyColor(Color{ 1,0,0 });
 
-	m_pCellSpace = new CellSpace(worldSize, worldSize, 15, 15, m_FlockSize);
+	m_pCellSpace = new CellSpace(worldSize, worldSize, 10, 10, m_FlockSize);
 
 	for (auto pAgent : m_Agents)
 	{
 		m_pCellSpace->AddAgent(pAgent);
+	}
+
+	m_OldPositions.resize(m_Agents.size());
+	for (int idx{}; idx < m_Agents.size(); ++idx)
+	{
+		m_OldPositions[idx] = m_Agents[idx]->GetPosition();
 	}
 
 }
@@ -121,7 +127,8 @@ void Flock::Update(float deltaT)
 		for (int idx{}; idx < m_Agents.size(); ++idx)
 		{
 			m_pCellSpace->UpdateAgentCell(m_Agents[idx], m_OldPositions[idx]);
-			m_pCellSpace->RegisterNeighbors(m_Agents[idx], m_NeighborhoodRadius);
+			m_pCellSpace->RegisterNeighbors(m_Agents[idx], m_NeighborhoodRadius, m_DebugSpacePartitioning);
+
 			m_Agents[idx]->Update(deltaT);
 
 			m_OldPositions[idx] = m_Agents[idx]->GetPosition();
@@ -129,10 +136,10 @@ void Flock::Update(float deltaT)
 	}
 	else
 	{
-		for (auto pAgent : m_Agents)
+		for (int idx{}; idx < m_Agents.size(); ++idx)
 		{
-			RegisterNeighbors(pAgent);
-			pAgent->Update(deltaT);
+			RegisterNeighbors(m_Agents[idx]);
+			m_Agents[idx]->Update(deltaT);
 		}
 	}
 
@@ -167,6 +174,17 @@ void Flock::Render(float deltaT)
 		pAgent->Render(deltaT);
 	}
 
+	if (m_DebugSpacePartitioning && m_UsingSpacePartitioning)
+	{
+		m_pCellSpace->RenderCells();
+
+		Elite::Polygon polygon{ std::vector<Elite::Vector2>{Elite::Vector2{m_Agents[0]->GetPosition().x - m_NeighborhoodRadius,m_Agents[0]->GetPosition().y - m_NeighborhoodRadius},
+													Elite::Vector2{m_Agents[0]->GetPosition().x + m_NeighborhoodRadius,m_Agents[0]->GetPosition().y - m_NeighborhoodRadius},
+													Elite::Vector2{m_Agents[0]->GetPosition().x + m_NeighborhoodRadius,m_Agents[0]->GetPosition().y + m_NeighborhoodRadius},
+													Elite::Vector2{m_Agents[0]->GetPosition().x - m_NeighborhoodRadius,m_Agents[0]->GetPosition().y + m_NeighborhoodRadius}, } };
+		DEBUGRENDERER2D->DrawPolygon(&polygon, Color{ 1,0,0 });
+
+	}
 
 }
 
@@ -227,37 +245,31 @@ void Flock::UpdateAndRenderUI()
 	//End
 	ImGui::PopAllowKeyboardFocus(); 
 	ImGui::End();
-	
+
+
 }
 
 void Flock::RegisterNeighbors(SteeringAgent* pAgent)
 {
-	if (m_UsingSpacePartitioning)
-	{
-		m_pCellSpace->RegisterNeighbors(pAgent, m_NeighborhoodRadius);
-	}
-	else
-	{
-		// TODO COMPLETED: Implement
-		m_Neighbors.clear();
-		m_Neighbors.resize(0);
-		m_NrOfNeighbors = 0;
+	// TODO COMPLETED: Implement
+	m_Neighbors.clear();
+	m_Neighbors.resize(0);
+	m_NrOfNeighbors = 0;
 
-		Elite::Vector2 agentPos{ pAgent->GetPosition() };
+	Elite::Vector2 agentPos{ pAgent->GetPosition() };
 
-		for (auto pAgentPotNbr : m_Agents)
+	for (auto pAgentPotNbr : m_Agents)
+	{
+		if (pAgentPotNbr != pAgent)
 		{
-			if (pAgentPotNbr != pAgent)
-			{
-				Elite::Vector2 agentPotNbrPos{ pAgentPotNbr->GetPosition() };
+			Elite::Vector2 agentPotNbrPos{ pAgentPotNbr->GetPosition() };
 
-				if (m_NeighborhoodRadius * m_NeighborhoodRadius >=
-					(agentPotNbrPos.x - agentPos.x) * (agentPotNbrPos.x - agentPos.x) +
-					(agentPotNbrPos.y - agentPos.y) * (agentPotNbrPos.y - agentPos.y))
-				{
-					m_Neighbors.push_back(pAgentPotNbr);
-					++m_NrOfNeighbors;
-				}
+			if (m_NeighborhoodRadius * m_NeighborhoodRadius >=
+				(agentPotNbrPos.x - agentPos.x) * (agentPotNbrPos.x - agentPos.x) +
+				(agentPotNbrPos.y - agentPos.y) * (agentPotNbrPos.y - agentPos.y))
+			{
+				m_Neighbors.push_back(pAgentPotNbr);
+				++m_NrOfNeighbors;
 			}
 		}
 	}
@@ -290,15 +302,24 @@ const std::vector<SteeringAgent*>& Flock::GetNeighbors() const
 Elite::Vector2 Flock::GetAverageNeighborPos() const
 {
 	// TODO COMPLETED: Implement
-
 	Vector2 averageNeigborPos{};
 
-	for (auto pAgent: m_Neighbors)
+	if (m_UsingSpacePartitioning)
 	{
-		averageNeigborPos += pAgent->GetPosition();
+		for (auto pAgent : m_pCellSpace->GetNeighbors())
+		{
+			averageNeigborPos += pAgent->GetPosition();
+		}
+		averageNeigborPos /= m_pCellSpace->GetNrOfNeighbors();
 	}
-	averageNeigborPos /= m_NrOfNeighbors;
-
+	else
+	{
+		for (auto pAgent : m_Neighbors)
+		{
+			averageNeigborPos += pAgent->GetPosition();
+		}
+		averageNeigborPos /= m_NrOfNeighbors;
+	}
 	return averageNeigborPos;
 }
 
@@ -308,12 +329,22 @@ Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 
 	Vector2 averageNeigborVel{};
 
-	for (auto pAgent : m_Neighbors)
+	if (m_UsingSpacePartitioning)
 	{
-		averageNeigborVel += pAgent->GetLinearVelocity();
+		for (auto pAgent : m_pCellSpace->GetNeighbors())
+		{
+			averageNeigborVel += pAgent->GetLinearVelocity();
+		}
+		averageNeigborVel /= m_pCellSpace->GetNrOfNeighbors();
 	}
-	averageNeigborVel /= m_NrOfNeighbors;
-
+	else
+	{
+		for (auto pAgent : m_Neighbors)
+		{
+			averageNeigborVel += pAgent->GetLinearVelocity();
+		}
+		averageNeigborVel /= m_NrOfNeighbors;
+	}
 	return averageNeigborVel;
 }
 

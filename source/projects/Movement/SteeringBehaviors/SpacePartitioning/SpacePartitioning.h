@@ -22,6 +22,7 @@ class SteeringAgent;
 // ------------
 struct Cell final
 {
+	Cell();
 	Cell(float left, float bottom, float width, float height);
 
 	std::vector<Elite::Vector2> GetRectPoints() const;
@@ -41,7 +42,7 @@ public:
 	void AddAgent(SteeringAgent* agent);
 	void UpdateAgentCell(SteeringAgent* agent, Elite::Vector2 oldPos);
 
-	void RegisterNeighbors(SteeringAgent* agent, float queryRadius);
+	void RegisterNeighbors(SteeringAgent* agent, float queryRadius, bool debug);
 	const std::vector<SteeringAgent*>& GetNeighbors() const { return m_Neighbors; }
 	int GetNrOfNeighbors() const { return m_NrOfNeighbors; }
 

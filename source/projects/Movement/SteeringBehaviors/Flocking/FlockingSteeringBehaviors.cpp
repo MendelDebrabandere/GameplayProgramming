@@ -28,7 +28,6 @@ SteeringOutput Cohesion::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 SteeringOutput Separation::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	std::vector<SteeringAgent*> neighbors{ m_pFlock->GetNeighbors() };
-	int nrOfNeighbors{ m_pFlock->GetNrOfNeighbors() };
 
 	Elite::Vector2 direction{};
 

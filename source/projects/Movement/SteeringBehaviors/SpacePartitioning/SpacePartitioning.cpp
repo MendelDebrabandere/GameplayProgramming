@@ -149,6 +149,13 @@ void CellSpace::RenderCells() const
 										Elite::Color{ 230,230,250 },
 										0.9f);
 	}
+	for (const Cell& cell : m_Cells)
+	{
+		int number{ int(cell.agents.size()) };
+		Elite::Vector2 pos{ cell.boundingBox.bottomLeft.x, cell.boundingBox.bottomLeft.y + cell.boundingBox.height };
+
+		DEBUGRENDERER2D->DrawString(pos, std::to_string(number).c_str());
+	}
 }
 
 int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
@@ -165,6 +172,20 @@ int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 			}
 		}
 	}
+
+	//bottomLeft
+	if (pos.x <= 0 && pos.y <= 0)
+		return 0;
+	//bottomRight
+	else if (pos.x >= m_SpaceWidth && pos.y <= 0)
+		return m_NrOfCols - 1;
+	//topLeft
+	else if (pos.x <= 0 && pos.y >= m_SpaceHeight)
+		return m_Cells.size() - m_NrOfCols;
+	//topRight
+	else if (pos.x >= m_SpaceWidth && pos.y >= m_SpaceHeight)
+		return m_Cells.size() - 1;
+
 
 	// point is out of bounds horizontal
 	if (pos.x <= 0 || pos.x >= m_SpaceWidth)
@@ -206,16 +227,4 @@ int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 		}
 	}
 
-	//bottomLeft
-	if (pos.x <= 0 && pos.y <= 0)
-		return 0;
-	//bottomRight
-	else if (pos.x >= m_SpaceWidth && pos.y <= 0)
-		return m_NrOfCols - 1;
-	//topLeft
-	else if (pos.x <= 0 && pos.y >= m_SpaceHeight)
-		return m_Cells.size() - m_NrOfCols + 1;
-	//topRight
-	else if (pos.x >= m_SpaceWidth && pos.y >= m_SpaceHeight)
-		return m_Cells.size() - 1;
 }

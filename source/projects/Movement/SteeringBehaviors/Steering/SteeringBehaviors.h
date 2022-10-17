@@ -103,6 +103,8 @@ public:
 
 	//Wander Behaviour
 	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
+private:
+	float m_WanderAngle = 0.f;
 };
 
 ///////////////////////////////////////
@@ -138,6 +140,39 @@ private:
 
 };
 
+///////////////////////////////////////
+//HIDE
+//****
+class Hide final : public ISteeringBehavior
+{
+public:
+	Hide(std::vector<Obstacle*>* obstaclePtrs) :m_ObstaclePtrs{ obstaclePtrs } {};
+	virtual ~Hide() = default;
+
+	//Evade Behaviour
+	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
+
+private:
+	std::vector<Obstacle*>* m_ObstaclePtrs;
+
+};
+
+///////////////////////////////////////
+//ObstacleAvoidance
+//****
+class AvoidObstacle final : public ISteeringBehavior
+{
+public:
+	AvoidObstacle(std::vector<Obstacle*>* obstaclePtrs) :m_ObstaclePtrs{ obstaclePtrs } {};
+	virtual ~AvoidObstacle() = default;
+
+	//Evade Behaviour
+	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
+
+private:
+	float m_WanderAngle = 0.f;
+	std::vector<Obstacle*>* m_ObstaclePtrs;
+};
 #endif
 
 

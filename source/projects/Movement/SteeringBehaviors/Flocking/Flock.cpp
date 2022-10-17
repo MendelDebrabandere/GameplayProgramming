@@ -62,7 +62,7 @@ Flock::Flock(
 	m_pAgentToEvade->SetMass(0.1f);
 	m_pAgentToEvade->SetBodyColor(Color{ 1,0,0 });
 
-	m_pCellSpace = new CellSpace(worldSize, worldSize, 10, 10, m_FlockSize);
+	m_pCellSpace = new CellSpace(worldSize, worldSize, 15, 15, m_FlockSize);
 
 	for (auto pAgent : m_Agents)
 	{
@@ -113,7 +113,7 @@ void Flock::Update(float deltaT)
 	m_pEvadeBehavior->SetTarget(m_pAgentToEvade->GetPosition());
 	m_pAgentToEvade->Update(deltaT);
 
-	for (BlendedSteering::WeightedBehavior& weightedBehavior : m_pBlendedSteering->GetWeightedBehaviorsRef())
+	for (BlendedSteering::WeightedBehavior weightedBehavior : m_pBlendedSteering->GetWeightedBehaviorsRef())
 	{
 		if (weightedBehavior.weight == 0.f)
 			weightedBehavior.pBehavior->SetDebugRender(false);
@@ -130,7 +130,6 @@ void Flock::Update(float deltaT)
 			m_pCellSpace->RegisterNeighbors(m_Agents[idx], m_NeighborhoodRadius, m_DebugSpacePartitioning);
 
 			m_Agents[idx]->Update(deltaT);
-
 			m_OldPositions[idx] = m_Agents[idx]->GetPosition();
 		}
 	}
@@ -143,7 +142,6 @@ void Flock::Update(float deltaT)
 		}
 	}
 
-
 	if (m_TrimWorld)
 	{
 		for (auto pAgent : m_Agents)
@@ -152,6 +150,7 @@ void Flock::Update(float deltaT)
 		}
 		m_pAgentToEvade->TrimToWorld(m_WorldSize);
 	}
+
 
 }
 
@@ -165,6 +164,21 @@ void Flock::Render(float deltaT)
 	{
 		DEBUGRENDERER2D->DrawCircle(m_Agents[0]->GetPosition(), m_NeighborhoodRadius, { 1,0,0 }, 0.9f);
 		m_Agents[0]->SetRenderBehavior(true);
+
+		for (auto pAgentOther : m_Agents)
+		{
+			if (pAgentOther != m_Agents[0])
+			{
+				float distanceSquared = ((pAgentOther->GetPosition().x - m_Agents[0]->GetPosition().x) * (pAgentOther->GetPosition().x - m_Agents[0]->GetPosition().x))
+					+ ((pAgentOther->GetPosition().y - m_Agents[0]->GetPosition().y) * (pAgentOther->GetPosition().y - m_Agents[0]->GetPosition().y));
+
+				if (distanceSquared <= m_NeighborhoodRadius * m_NeighborhoodRadius)
+				{
+					pAgentOther->SetBodyColor({ 0,1,0 });
+				}
+			}
+		}
+
 	}
 	else
 		m_Agents[0]->SetRenderBehavior(false);
@@ -172,6 +186,7 @@ void Flock::Render(float deltaT)
 	for (auto pAgent : m_Agents)
 	{
 		pAgent->Render(deltaT);
+		pAgent->SetBodyColor({ 1,1,1 });
 	}
 
 	if (m_DebugSpacePartitioning && m_UsingSpacePartitioning)
@@ -354,7 +369,6 @@ void Flock::SetTarget_Seek(TargetData target)
 
 	m_pSeekBehavior->SetTarget(target);
 }
-
 
 float* Flock::GetWeight(ISteeringBehavior* pBehavior) 
 {

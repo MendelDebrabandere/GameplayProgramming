@@ -22,7 +22,7 @@ void App_Flocking::Start()
 	DEBUGRENDERER2D->GetActiveCamera()->SetCenter(Elite::Vector2(m_TrimWorldSize / 1.5f, m_TrimWorldSize / 2));
 
 	//m_pFlock = new Flock(m_FlockSize, m_TrimWorldSize, m_pAgentToEvade, true);
-	m_pFlock = new Flock(400, m_TrimWorldSize, m_pAgentToEvade, true);
+	m_pFlock = new Flock(500, m_TrimWorldSize, m_pAgentToEvade, true);
 }
 
 void App_Flocking::Update(float deltaTime)

@@ -336,6 +336,12 @@ void App_SteeringBehaviors::SetAgentBehavior(ImGui_Agent& a)
 	case BehaviorTypes::Evade:
 		a.pBehavior = new Evade();
 		break;
+	case BehaviorTypes::Hide:
+		a.pBehavior = new Hide(&m_Obstacles);
+		break;	
+	case BehaviorTypes::AvoidObstacle:
+		a.pBehavior = new AvoidObstacle(&m_Obstacles);
+		break;
 	}
 
 	UpdateTarget(a);

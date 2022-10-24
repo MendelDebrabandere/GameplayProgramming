@@ -36,22 +36,29 @@ void App_GraphTheory::Update(float deltaTime)
 
 	auto eulerFinder = EulerianPath<GraphNode2D, GraphConnection2D>(m_pGraph2D);
 	Eulerianity eulerianity{ eulerFinder.IsEulerian() };
+	std::vector<GraphNode2D*> eulerianPath = eulerFinder.FindPath(eulerianity);
 
-	switch (eulerianity)
+	//switch (eulerianity)
+	//{
+	//case Elite::Eulerianity::notEulerian:
+	//	cout << "not eulerian" << endl;
+	//	break;
+	//case Elite::Eulerianity::semiEulerian:
+	//	cout << "semi eulerian" << endl;
+	//	break;
+	//case Elite::Eulerianity::eulerian:
+	//	cout << "eulerian" << endl;
+	//	break;
+	//}
+
+	std::stringstream pathText{};
+	for (GraphNode2D* n : eulerianPath)
 	{
-	case Elite::Eulerianity::notEulerian:
-		cout << "not eulerian" << endl;
-		break;
-	case Elite::Eulerianity::semiEulerian:
-		cout << "semi eulerian" << endl;
-		break;
-	case Elite::Eulerianity::eulerian:
-		cout << "eulerian" << endl;
-		break;
+		pathText << n->GetIndex() << " ";
 	}
+	std::cout << pathText.str() << "\n";
 
-	for (auto thing: eulerFinder.FindPath(eulerianity))
-		cout << thing;
+
 
 
 	//------- UI --------

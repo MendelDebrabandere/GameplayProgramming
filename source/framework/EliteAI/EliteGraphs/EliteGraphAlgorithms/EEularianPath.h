@@ -71,8 +71,8 @@ namespace Elite
 		// Get a copy of the graph because this algorithm involves removing edges
 		auto graphCopy = m_pGraph->Clone();
 		auto path = std::vector<T_NodeType*>();
-		auto stack = std::vector<T_NodeType*>();
 		int nrOfNodes = graphCopy->GetNrOfNodes();
+		int curNodeIdx{};
 
 		// Check if there can be an Euler path
 		// If this graph is not eulerian, return the empty path
@@ -83,15 +83,62 @@ namespace Elite
 			return path;
 			break;
 		case Elite::Eulerianity::semiEulerian:
-			stack.push_back(stack);
+		{
+			int counter{};
+			auto nodes = m_pGraph->GetAllNodes();
+			for (auto n : nodes)
+			{
+				auto connections = m_pGraph->GetNodeConnections(n);
+				if (connections.size() % 2 == 1)
+				{
+					curNodeIdx = n->GetIndex();
+					break;
+				}
+				++counter;
+			}
+		}
 			break;
 		case Elite::Eulerianity::eulerian:
-			
+			curNodeIdx = 0;
 			break;
 		}
 
 		// Start algorithm loop
 		std::stack<int> nodeStack;
+
+		// Add the start node to the stack
+		nodeStack.push(curNodeIdx);
+
+		while (graphCopy->GetNodeConnections(curNodeIdx).size() > 0 || nodeStack.size() > 0) 
+		{
+			// Take the last node in the stack as the current node
+			curNodeIdx = nodeStack.top();
+
+			auto connections{ graphCopy->GetNodeConnections(curNodeIdx) };
+
+			if (connections.size() > 0)
+			{
+				// Take any of its neighbors
+				T_ConnectionType* pConnectionToNeighbor{ connections.front() };
+
+				// Set that neighbor as the current node
+				curNodeIdx = pConnectionToNeighbor->GetTo();
+
+				// Add the node to the stack
+				nodeStack.push(curNodeIdx);
+
+				// Remove the edge between selected neighbor and that node 
+				graphCopy->RemoveConnection(pConnectionToNeighbor);
+			}
+			else
+			{
+				// Add the current node to the path 
+				path.push_back(m_pGraph->GetNode(curNodeIdx));
+
+				// Remove this last node from the stack
+				nodeStack.pop();
+			}
+		}
 
 
 		std::reverse(path.begin(), path.end()); // reverses order of the path

@@ -7,7 +7,9 @@
 //#define ActiveApp_CombinedSteering
 //#define ActiveApp_Flocking
 //#define ActiveApp_GraphTheory
-#define ActiveApp_PathfindingAStar
+//#define ActiveApp_PathfindingAStar
+//#define ActiveApp_NavMeshGraph
+#define ActiveApp_FSM
 
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
@@ -35,10 +37,19 @@ typedef App_Flocking CurrentApp;
 typedef App_GraphTheory CurrentApp;
 #endif
 
-
 #ifdef ActiveApp_PathfindingAStar
 #include "projects/Movement/pathfinding/AStar/App_PathfindingAStar/App_PathfindingAStar.h"
 typedef App_PathfindingAStar CurrentApp;
+#endif
+
+#ifdef ActiveApp_NavMeshGraph
+#include "projects/Movement/pathfinding/NavMeshGraph/App_NavMeshGraph.h"
+typedef App_NavMeshGraph CurrentApp;
+#endif
+
+#ifdef ActiveApp_FSM
+#include "projects/DecisionMaking/FiniteStateMachines/App_AgarioGame.h"
+typedef App_AgarioGame CurrentApp;
 #endif
 
 class App_Selector {

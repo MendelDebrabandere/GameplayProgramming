@@ -56,11 +56,6 @@ SteeringOutput Arrive::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed();
 
-	if ((m_Target.Position - pAgent->GetPosition()).Magnitude() <= 10)
-	{
-		steering.LinearVelocity *= (m_Target.Position - pAgent->GetPosition()).Magnitude() / 20.f;
-	}
-
 	if (pAgent->CanRenderBehavior() && m_DebugRender)
 		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, steering.LinearVelocity.Magnitude(), {0,1,0});
 

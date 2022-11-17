@@ -118,30 +118,24 @@ namespace Elite
 
 			if (connections.size() > 0)
 			{
-				// Take any of its neighbors
 				T_ConnectionType* pConnectionToNeighbor{ connections.front() };
 
-				// Set that neighbor as the current node
 				curNodeIdx = pConnectionToNeighbor->GetTo();
 
-				// Add the node to the stack
 				nodeStack.push(curNodeIdx);
 
-				// Remove the edge between selected neighbor and that node 
 				graphCopy->RemoveConnection(pConnectionToNeighbor);
 			}
 			else
 			{
-				// Add the current node to the path 
 				path.push_back(m_pGraph->GetNode(curNodeIdx));
 
-				// Remove this last node from the stack
 				nodeStack.pop();
 			}
 		}
 
 
-		std::reverse(path.begin(), path.end()); // reverses order of the path
+		std::reverse(path.begin(), path.end());
 		return path;
 	}
 

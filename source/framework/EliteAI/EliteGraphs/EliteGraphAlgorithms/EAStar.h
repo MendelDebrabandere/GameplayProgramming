@@ -1,4 +1,5 @@
 #pragma once
+#include "framework/EliteAI/EliteNavigation/ENavigation.h"
 
 namespace Elite
 {
@@ -55,157 +56,96 @@ namespace Elite
 		std::vector<NodeRecord> openList;
 		std::vector<NodeRecord> closedList;
 
-		NodeRecord curRecord{ pStartNode, nullptr, 0.0f, GetHeuristicCost(pStartNode, pGoalNode) };
-		openList.push_back(curRecord);
-
-		// Keep searching for a connection that leads to the end node
-		while (!openList.empty())
+		// 1. Create a NodeRecord to kickstart the loop
+		NodeRecord currentRecord{ pStartNode, nullptr, 0.0f, GetHeuristicCost(pStartNode, pGoalNode) };
+		openList.push_back(currentRecord);
+		
+		// 2. While (openlist != empty)
+		while (openList.size() != 0)
 		{
-			// Get connection with lowest F score
-			curRecord = *std::min_element(openList.begin(), openList.end());
+			// A. Get NodeRecord with lowest costfrom openList
+			currentRecord = *std::min_element(openList.begin(), openList.end());
 
-			// Check if that connection leads to the end node
-			if (curRecord.pNode == pGoalNode) break;
+			// B. Check if that connection leads to the end node
+			if (currentRecord.pNode == pGoalNode) 
+				break;
 
-			// For every neighbor
-			for (auto& connection : m_pGraph->GetNodeConnections(curRecord.pNode))
+			// C. Else we get all the connections of the NodeRecor's node
+			for (const auto& connection : m_pGraph->GetNodeConnections(currentRecord.pNode))
 			{
-				// Get the current node/neighbor
-				T_NodeType* pCurNode{ m_pGraph->GetNode(connection->GetTo()) };
+				// D. Check if any of those connections lead to a node already in the closed list
+				T_NodeType* pConnectedNode{ m_pGraph->GetNode(connection->GetTo()) };
 
-				// Calculate the total cost so far
-				const float curGCost{ curRecord.costSoFar + connection->GetCost() };
+				const float currentCost{ currentRecord.costSoFar + connection->GetCost() };
 
-				// A variable to check if we should skip this connection (if a cheaper connection already exists)
-				bool cheaperConnectionFound{};
+				bool foundCheaper{false};
 
-				// Check the closed list for an already existing connection to the current node
-				for (const NodeRecord& existingRecord : closedList)
+				for (const NodeRecord& NRecord : closedList)
 				{
-					if (existingRecord.pNode == pCurNode)
+					if (NRecord.pNode == pConnectedNode)
 					{
-						// Check if the already existing connection is cheaper
-						if (existingRecord.costSoFar < curGCost)
+						if (NRecord.costSoFar < currentCost)
 						{
-							// If so, continue to the next connection
-							cheaperConnectionFound = true;
+							foundCheaper = true;
 							break;
 						}
 
-						// Else remove it from the closedList
-						closedList.erase(std::remove(closedList.begin(), closedList.end(), existingRecord));
+						closedList.erase(std::remove(closedList.begin(), closedList.end(), NRecord));
 						break;
 					}
 				}
+				if (foundCheaper) continue;
 
-				// If an already existing connection is cheaper, continue to the next connection
-				if (cheaperConnectionFound) continue;
 
-				// Check the open list for a connection to the current node
+
+				// E. If 2.D check failed, check if any of those connections lead to a node already in the open list
 				for (const NodeRecord& upcomingRecord : openList)
 				{
-					if (upcomingRecord.pNode == pCurNode)
+					if (upcomingRecord.pNode == pConnectedNode)
 					{
-						// Check if the already existing connection is cheaper
-						if (upcomingRecord.costSoFar < curGCost)
+						if (upcomingRecord.costSoFar < currentCost)
 						{
-							// If so, continue to the next connection
-							cheaperConnectionFound = true;
+							foundCheaper = true;
 							break;
 						}
-
-						// Else remove it from the openList
 						openList.erase(std::remove(openList.begin(), openList.end(), upcomingRecord));
 						break;
 					}
 				}
+				if (foundCheaper) continue;
 
-				// If an already existing connection is cheaper, continue to the next connection
-				if (cheaperConnectionFound) continue;
 
-				// At this point any expensive connection to the current node is removed (if it existed)
+				// F.	At this point any expensive connection should be removed (if it existed).
 				//		We create a new nodeRecord and add it to the openList
-				openList.push_back(NodeRecord{ pCurNode, connection, curGCost, curGCost + GetHeuristicCost(pCurNode, pGoalNode) });
+				openList.push_back(NodeRecord{ pConnectedNode, connection, currentCost, currentCost + GetHeuristicCost(pConnectedNode, pGoalNode) });
 			}
 
-			// Remove the current record from the openList and add it to the closestList
-			openList.erase(std::remove(openList.begin(), openList.end(), curRecord));
-			closedList.push_back(curRecord);
+			// G. Remove NodeRecord from the openList and add it to the closedList
+			openList.erase(std::remove(openList.begin(), openList.end(), currentRecord));
+			closedList.push_back(currentRecord);
 		}
 
-		// Loop over the open list for all non-checked records
-		for (const NodeRecord& openRecord : openList)
+		// 3. Reconstruct path from last connection to start node
+		while (currentRecord.pNode != pStartNode)
 		{
-			// Variable to hold wether the non-checked record is already in the closedList
-			bool isRecordInClosedList{};
+			path.push_back(currentRecord.pNode);
 
-			// Check the closed list for an already existing connection to the current node
-			for (NodeRecord& existingRecord : closedList)
+			for (const NodeRecord& Node : closedList)
 			{
-				if (openRecord.pNode == existingRecord.pNode)
+				if (currentRecord.pConnection->GetFrom() == Node.pNode->GetIndex())
 				{
-					isRecordInClosedList = true;
-
-					// Check if the non-checked record is cheaper then the existing record
-					if (openRecord.costSoFar < existingRecord.costSoFar)
-					{
-						// If so, replace the connection in the existing record
-						existingRecord.pConnection = openRecord.pConnection;
-						existingRecord.costSoFar = openRecord.costSoFar;
-					}
-
-					break;
-				}
-			}
-
-			// If the non-checked record is not yet in the closedList, this is the cheapest route to the current node
-			// (Every route is cheaper then no route)
-			// So we add the record it to the closedList
-			if (!isRecordInClosedList)
-			{
-				closedList.push_back(openRecord);
-			}
-		}
-
-		// If the result of the our search didn't end up at the goal node, find the node closest to the 
-		if (curRecord.pNode != pGoalNode)
-		{
-			// Go over all existing records to find the closest node to the goal
-			for (const NodeRecord& existingRecord : closedList)
-			{
-				if (curRecord.estimatedTotalCost - curRecord.costSoFar > existingRecord.estimatedTotalCost - existingRecord.costSoFar)
-				{
-					curRecord = existingRecord;
-				}
-			}
-		}
-
-		// Reconstruct path from last connection to start node
-		// Track back until the node of the record is the start node
-		while (curRecord.pNode != pStartNode)
-		{
-			// Add the current node to the path
-			path.push_back(curRecord.pNode);
-
-			// Look in the closedList for the cheapest route to the previous node in the connection
-			for (const NodeRecord& existingRecord : closedList)
-			{
-				if (existingRecord.pNode->GetIndex() == curRecord.pConnection->GetFrom())
-				{
-					// Set the currentRecord to the found record
-					curRecord = existingRecord;
+					currentRecord = Node;
 					break;
 				}
 			}
 		}
 
-		// Add the startnode's position to the path
+
 		path.push_back(pStartNode);
 
-		// Reverse the path
+		
 		std::reverse(path.begin(), path.end());
 
-		// Return the path
 		return path;
 	}
 

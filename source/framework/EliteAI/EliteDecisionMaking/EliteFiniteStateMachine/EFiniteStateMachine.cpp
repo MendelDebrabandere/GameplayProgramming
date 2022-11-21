@@ -28,9 +28,19 @@ void FiniteStateMachine::AddTransition(FSMState* startState, FSMState* toState, 
 
 void FiniteStateMachine::Update(float deltaTime)
 {
-    //TODO 4: Look if 1 or more condition exists for the current state that we are in
+    //TODO 4: Look if 1 or more transition exists for the current state that we are in
     //Tip: Check the transitions map for a TransitionState pair
-    
+    auto transitionsIt = m_Transitions.find(m_pCurrentState);
+    if (transitionsIt != m_Transitions.end())
+    {
+        for (auto& transition : transitionsIt->second)
+        {
+            FSMCondition* cond = transition.first;
+            FSMState* state = transition.second;
+
+            //cond->Evaluate()
+        }
+    }
 
     //TODO 5: if a TransitionState exists
   

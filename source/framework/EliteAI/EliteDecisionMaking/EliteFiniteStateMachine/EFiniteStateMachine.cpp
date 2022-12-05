@@ -38,9 +38,10 @@ void FiniteStateMachine::Update(float deltaTime)
             FSMCondition* cond = transition.first;
             FSMState* state = transition.second;
 
-            //cond->Evaluate()
+            cond->Evaluate(m_pBlackboard);
         }
     }
+    std::cout << "jema\n";
 
     //TODO 5: if a TransitionState exists
   

@@ -24,7 +24,6 @@ Flock::Flock(
 {
 	m_Agents.resize(m_FlockSize);
 
-	// TODO: initialize the flock and the memory pool
 
 
 	m_pSeekBehavior = new Seek();
@@ -79,7 +78,6 @@ Flock::Flock(
 
 Flock::~Flock()
 {
-	// TODO: clean up any additional data
 
 	SAFE_DELETE(m_pSeekBehavior);
 	SAFE_DELETE(m_pSeparationBehavior);
@@ -104,7 +102,6 @@ Flock::~Flock()
 
 void Flock::Update(float deltaT)
 {
-	// TODO: update the flock
 	// loop over all the agents
 		// register its neighbors	(-> memory pool is filled with neighbors of the currently evaluated agent)
 		// update it				(-> the behaviors can use the neighbors stored in the pool, next iteration they will be the next agent's neighbors)
@@ -156,7 +153,6 @@ void Flock::Update(float deltaT)
 
 void Flock::Render(float deltaT)
 {
-	// TODO: render the flock
 	m_pAgentToEvade->Render(deltaT);
 
 
@@ -241,7 +237,6 @@ void Flock::UpdateAndRenderUI()
 	//ImGui::Text("Flocking");
 	//ImGui::Spacing();
 
-	// TODO: Implement checkboxes for debug rendering and weight sliders here
 
 
 	ImGui::SliderFloat("Seeking", &m_pBlendedSteering->GetWeightedBehaviorsRef()[0].weight, 0.f, 1.f, "%.2");
@@ -266,7 +261,6 @@ void Flock::UpdateAndRenderUI()
 
 void Flock::RegisterNeighbors(SteeringAgent* pAgent)
 {
-	// TODO COMPLETED: Implement
 	m_Neighbors.clear();
 	m_Neighbors.resize(0);
 	m_NrOfNeighbors = 0;
@@ -316,7 +310,6 @@ const std::vector<SteeringAgent*>& Flock::GetNeighbors() const
 
 Elite::Vector2 Flock::GetAverageNeighborPos() const
 {
-	// TODO COMPLETED: Implement
 	Vector2 averageNeigborPos{};
 
 	if (m_UsingSpacePartitioning)
@@ -340,7 +333,6 @@ Elite::Vector2 Flock::GetAverageNeighborPos() const
 
 Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 {
-	// TODO COMPLETED: Implement
 
 	Vector2 averageNeigborVel{};
 
@@ -365,7 +357,6 @@ Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 
 void Flock::SetTarget_Seek(TargetData target)
 {
-	// TODO: Set target for seek behavior
 
 	m_pSeekBehavior->SetTarget(target);
 }

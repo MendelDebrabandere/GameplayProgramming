@@ -160,7 +160,7 @@ void CellSpace::RenderCells() const
 
 int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 {
-	for (int idx{}; idx < m_Cells.size(); ++idx)
+	for (UINT idx{}; idx < m_Cells.size(); ++idx)
 	{
 		Elite::Rect rect{ m_Cells[idx].boundingBox};
 
@@ -190,7 +190,7 @@ int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 	// point is out of bounds horizontal
 	if (pos.x <= 0 || pos.x >= m_SpaceWidth)
 	{
-		for (int idx{}; idx < m_Cells.size(); ++idx)
+		for (UINT idx{}; idx < m_Cells.size(); ++idx)
 		{
 			Elite::Rect rect{ m_Cells[idx].boundingBox };
 			if (pos.y >= rect.bottomLeft.y && pos.y <= rect.bottomLeft.y + rect.height)
@@ -210,7 +210,7 @@ int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 	// point is out of bounds vertical
 	if (pos.y <= 0 || pos.y >= m_SpaceHeight)
 	{
-		for (int idx{}; idx < m_Cells.size(); ++idx)
+		for (UINT idx{}; idx < m_Cells.size(); ++idx)
 		{
 			Elite::Rect rect{ m_Cells[idx].boundingBox };
 			if (pos.x >= rect.bottomLeft.x && pos.x <= rect.bottomLeft.x + rect.width)
@@ -226,5 +226,5 @@ int CellSpace::PositionToIndex(const Elite::Vector2 pos) const
 			}
 		}
 	}
-
+	return -1;
 }

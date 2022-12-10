@@ -54,7 +54,7 @@ void Elite::NavGraph::CreateNavigationGraph()
 {
 	int nodeCounter{};
 	//1. Go over all the edges of the navigationmesh and create nodes
-	for (int lineIdx{}; lineIdx < m_pNavMeshPolygon->GetLines().size(); ++lineIdx)
+	for (UINT lineIdx{}; lineIdx < m_pNavMeshPolygon->GetLines().size(); ++lineIdx)
 	{
 		if (m_pNavMeshPolygon->GetTrianglesFromLineIndex(lineIdx).size() > 1)
 		{
@@ -68,7 +68,7 @@ void Elite::NavGraph::CreateNavigationGraph()
 	}																								   
 																									   		
 	//2. Create connections now that every node is created											   		
-	for (int triangleIdx{}; triangleIdx < m_pNavMeshPolygon->GetTriangles().size(); ++triangleIdx)	   		
+	for (UINT triangleIdx{}; triangleIdx < m_pNavMeshPolygon->GetTriangles().size(); ++triangleIdx)	   		
 	{																								   		
 		std::vector<int> NodeIdxs{};																   		
 																									   		

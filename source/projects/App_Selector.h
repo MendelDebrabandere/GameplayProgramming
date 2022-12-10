@@ -9,8 +9,9 @@
 //#define ActiveApp_GraphTheory
 //#define ActiveApp_PathfindingAStar
 //#define ActiveApp_NavMeshGraph
-//#define ActiveApp_FSM
-#define ActiveApp_BehaviorTree
+#define ActiveApp_FSM
+//#define ActiveApp_BehaviorTree
+//#define ActiveApp_InfluenceMap
 
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
@@ -58,6 +59,10 @@ typedef App_AgarioGame CurrentApp;
 typedef App_AgarioGame_BT CurrentApp;
 #endif
 
+#ifdef ActiveApp_InfluenceMap
+#include "projects/DecisionMaking/InfluenceMaps/App_InfluenceMap.h"
+typedef App_InfluenceMap CurrentApp;
+#endif
 
 class App_Selector {
 public:  

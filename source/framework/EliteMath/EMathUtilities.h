@@ -13,9 +13,9 @@
 
 namespace Elite {
 	/* --- CONSTANTS --- */
-	#define E_PI	3.14159265358979323846
-	#define E_PI_2	1.57079632679489661923
-	#define E_PI_4	0.785398163397448309616
+	#define E_PI	3.14159265358979323846f
+	#define E_PI_2	1.57079632679489661923f
+	#define E_PI_4	0.785398163397448309616f
 
 	/* --- FUNCTIONS --- */
 	/*! Comparing two values (preferably float or doubles) and see if they are equal. You can change the precision (by default: epsilon)*/

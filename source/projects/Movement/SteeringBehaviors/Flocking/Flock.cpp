@@ -46,7 +46,7 @@ Flock::Flock(
 	for (int i{}; i < flockSize; i++)
 	{
 		m_Agents[i] = new SteeringAgent();
-		m_Agents[i]->SetPosition(Elite::Vector2(rand() % 100, rand() % 100));
+		m_Agents[i]->SetPosition(Elite::Vector2(float(rand() % 100), float(rand() % 100)));
 		m_Agents[i]->SetSteeringBehavior(m_pPrioritySteering);
 		m_Agents[i]->SetMaxLinearSpeed(15.f);
 		m_Agents[i]->SetAutoOrient(true);
@@ -69,7 +69,7 @@ Flock::Flock(
 	}
 
 	m_OldPositions.resize(m_Agents.size());
-	for (int idx{}; idx < m_Agents.size(); ++idx)
+	for (UINT idx{}; idx < m_Agents.size(); ++idx)
 	{
 		m_OldPositions[idx] = m_Agents[idx]->GetPosition();
 	}
@@ -121,7 +121,7 @@ void Flock::Update(float deltaT)
 
 	if (m_UsingSpacePartitioning)
 	{
-		for (int idx{}; idx < m_Agents.size(); ++idx)
+		for (UINT idx{}; idx < m_Agents.size(); ++idx)
 		{
 			m_pCellSpace->UpdateAgentCell(m_Agents[idx], m_OldPositions[idx]);
 			m_pCellSpace->RegisterNeighbors(m_Agents[idx], m_NeighborhoodRadius, m_DebugSpacePartitioning);
@@ -132,7 +132,7 @@ void Flock::Update(float deltaT)
 	}
 	else
 	{
-		for (int idx{}; idx < m_Agents.size(); ++idx)
+		for (UINT idx{}; idx < m_Agents.size(); ++idx)
 		{
 			RegisterNeighbors(m_Agents[idx]);
 			m_Agents[idx]->Update(deltaT);
@@ -318,7 +318,7 @@ Elite::Vector2 Flock::GetAverageNeighborPos() const
 		{
 			averageNeigborPos += pAgent->GetPosition();
 		}
-		averageNeigborPos /= m_pCellSpace->GetNrOfNeighbors();
+		averageNeigborPos /= float(m_pCellSpace->GetNrOfNeighbors());
 	}
 	else
 	{
@@ -326,7 +326,7 @@ Elite::Vector2 Flock::GetAverageNeighborPos() const
 		{
 			averageNeigborPos += pAgent->GetPosition();
 		}
-		averageNeigborPos /= m_NrOfNeighbors;
+		averageNeigborPos /= float(m_NrOfNeighbors);
 	}
 	return averageNeigborPos;
 }
@@ -342,7 +342,7 @@ Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 		{
 			averageNeigborVel += pAgent->GetLinearVelocity();
 		}
-		averageNeigborVel /= m_pCellSpace->GetNrOfNeighbors();
+		averageNeigborVel /= float(m_pCellSpace->GetNrOfNeighbors());
 	}
 	else
 	{
@@ -350,7 +350,7 @@ Elite::Vector2 Flock::GetAverageNeighborVelocity() const
 		{
 			averageNeigborVel += pAgent->GetLinearVelocity();
 		}
-		averageNeigborVel /= m_NrOfNeighbors;
+		averageNeigborVel /= float(m_NrOfNeighbors);
 	}
 	return averageNeigborVel;
 }

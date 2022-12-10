@@ -31,26 +31,27 @@ void FiniteStateMachine::Update(float deltaTime)
     //TODO 4: Look if 1 or more transition exists for the current state that we are in
     //Tip: Check the transitions map for a TransitionState pair
     auto transitionsIt = m_Transitions.find(m_pCurrentState);
+
+    //TODO 5: if a TransitionState exists
     if (transitionsIt != m_Transitions.end())
     {
+        //TODO 6: Loop over all the TransitionState pairs
         for (auto& transition : transitionsIt->second)
         {
             FSMCondition* cond = transition.first;
             FSMState* state = transition.second;
 
-            cond->Evaluate(m_pBlackboard);
+            //TODO 7: If the Evaluate function of the FSMCondition returns true => transition to the new corresponding state
+            if (cond->Evaluate(m_pBlackboard))
+            {
+                ChangeState(state);
+                break;
+            }
         }
     }
-    std::cout << "jema\n";
-
-    //TODO 5: if a TransitionState exists
-  
-        //TODO 6: Loop over all the TransitionState pairs 
-        //TODO 7: If the Evaluate function of the FSMCondition returns true => transition to the new corresponding state
-
-
     //TODO 8: Update the current state (if one exists)
-    
+    if (m_pCurrentState)
+        m_pCurrentState->Update(m_pBlackboard, deltaTime);    
 }
 
 Blackboard* FiniteStateMachine::GetBlackboard() const

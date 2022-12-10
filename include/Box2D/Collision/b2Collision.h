@@ -68,10 +68,10 @@ union b2ContactID
 /// provide reliable contact forces, especially for high speed collisions.
 struct b2ManifoldPoint
 {
-	b2Vec2 localPoint;		///< usage depends on manifold type
-	float32 normalImpulse;	///< the non-penetration impulse
-	float32 tangentImpulse;	///< the friction impulse
-	b2ContactID id;			///< uniquely identifies a contact point between two shapes
+	b2Vec2 localPoint{};		///< usage depends on manifold type
+	float32 normalImpulse{};	///< the non-penetration impulse
+	float32 tangentImpuls{};	///< the friction impulse
+	b2ContactID id{};			///< uniquely identifies a contact point between two shapes
 };
 
 /// A manifold for two touching convex shapes.

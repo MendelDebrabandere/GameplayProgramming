@@ -72,7 +72,7 @@ SteeringOutput Face::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 
 	float agentAngle{ pAgent->GetRotation() };
 
-	float diagonal{ sqrtf(pow(m_Target.Position.y - pAgent->GetPosition().y,2) + pow(m_Target.Position.x - pAgent->GetPosition().x, 2))};
+	float diagonal{ sqrtf(powf(m_Target.Position.y - pAgent->GetPosition().y,2) + powf(m_Target.Position.x - pAgent->GetPosition().x, 2))};
 
 	Elite::Vector2 agentPos{ pAgent->GetPosition() };
 
@@ -121,7 +121,7 @@ SteeringOutput Wander::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	float circleRadius{ 5 };
 	int maxWanderAngle{ 65 };
 
-	int randAngle = Elite::ToRadians((rand() % maxWanderAngle) - (rand() % maxWanderAngle));
+	int randAngle = int(Elite::ToRadians(float((rand() % maxWanderAngle) - (rand() % maxWanderAngle))));
 	m_WanderAngle += randAngle;
 
 	Elite::Vector2 circleCenter{ pAgent->GetPosition() + pAgent->GetDirection().GetNormalized() * (circleRadius + 2) };
@@ -219,7 +219,7 @@ SteeringOutput Hide::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	float closestDistanceSquared{ FLT_MAX };
 	int closestIdx{};
 
-	for (int idx{}; idx < (*m_ObstaclePtrs).size(); ++idx)
+	for (UINT idx{}; idx < (*m_ObstaclePtrs).size(); ++idx)
 	{
 		Elite::Vector2 distance{ (*m_ObstaclePtrs)[idx]->GetCenter() - pAgent->GetPosition() };
 
@@ -273,7 +273,7 @@ SteeringOutput AvoidObstacle::CalculateSteering(float deltaT, SteeringAgent* pAg
 
 
 	bool hasObstacleInFront{ false };
-	for (int idx{}; idx < (*m_ObstaclePtrs).size(); ++idx)
+	for (UINT idx{}; idx < (*m_ObstaclePtrs).size(); ++idx)
 	{
 		Elite::Vector2 fromObstacleToAgent{ pAgent->GetPosition() - (*m_ObstaclePtrs)[idx]->GetCenter() };
 		if (fromObstacleToAgent.MagnitudeSquared() < ((*m_ObstaclePtrs)[idx]->GetRadius() + fleeRadius) * ((*m_ObstaclePtrs)[idx]->GetRadius() + fleeRadius))
@@ -288,10 +288,10 @@ SteeringOutput AvoidObstacle::CalculateSteering(float deltaT, SteeringAgent* pAg
 
 	if (!hasObstacleInFront)
 	{
-		float circleRadius{ 5 };
+		float circleRadius{ 5.f };
 		int maxWanderAngle{ 65 };
 
-		int randAngle = Elite::ToRadians((rand() % maxWanderAngle) - (rand() % maxWanderAngle));
+		int randAngle = int(Elite::ToRadians(float((rand() % maxWanderAngle) - (rand() % maxWanderAngle))));
 		m_WanderAngle += randAngle;
 
 		Elite::Vector2 circleCenter{ pAgent->GetPosition() + pAgent->GetDirection().GetNormalized() * (circleRadius + 2) };

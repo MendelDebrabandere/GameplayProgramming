@@ -9,9 +9,10 @@
 #include "projects/Shared/Agario/AgarioContactListener.h"
 
 
-using namespace Elite;
 using namespace FSMStates;
 using namespace FSMConditions;
+using namespace Elite;
+
 
 App_AgarioGame::App_AgarioGame()
 {
@@ -69,7 +70,7 @@ void App_AgarioGame::Start()
 		Elite::Vector2 randomPos = randomVector2(0, m_TrimWorldSize * (2.0f / 3));
 		AgarioAgent* newAgent = new AgarioAgent(randomPos);
 
-		Blackboard* pBlackboard = CreateBlackboard(newAgent);
+		Elite::Blackboard* pBlackboard = CreateBlackboard(newAgent);
 
 
 		FiniteStateMachine* pStateMachine = new FiniteStateMachine(pWanderState, pBlackboard);
@@ -89,21 +90,41 @@ void App_AgarioGame::Start()
 	m_pCustomAgent = new AgarioAgent(randomPos, customColor);
 
 	//1. Create and add the necessary blackboard data
-	Blackboard* pBlackboard = CreateBlackboard(m_pCustomAgent);
+	Elite::Blackboard* pBlackboard = CreateBlackboard(m_pCustomAgent);
+
 	//2. Create the different agent states
-	SeekFoodState* pSeekFoodState = new SeekFoodState();
+	auto* pSeekFoodState = new SeekFoodState();
 	m_pStates.push_back(pSeekFoodState);
+	auto* pEvadeBiggerAgentState = new EvadeBiggerAgentState();
+	m_pStates.push_back(pEvadeBiggerAgentState);
+	auto* pPursueSmallerAgentState = new PursueSmallerAgentState();
+	m_pStates.push_back(pPursueSmallerAgentState);
+	auto* pMoveAwayFromBorderState = new MoveAwayFromBorderState();
+	m_pStates.push_back(pMoveAwayFromBorderState);
+
+
 	//3. Create the conditions beetween those states
-	FoodNearByCondition* pFoodNearByCondition = new FoodNearByCondition();
-	m_pConditions.push_back(pFoodNearByCondition);
+	auto* pSeekFoodCondition = new SeekFoodCondition();
+	m_pConditions.push_back(pSeekFoodCondition);
+
+	auto* pEvadeBiggerAgentCondition = new EvadeBiggerAgentCondition();
+	m_pConditions.push_back(pEvadeBiggerAgentCondition);
+
+	auto* pPursueSmallerAgentCondition = new PursueSmallerAgentCondition();
+	m_pConditions.push_back(pPursueSmallerAgentCondition);
+
+	auto* pMoveAwayFromBorderCondition = new MoveAwayFromBorderCondition();
+	m_pConditions.push_back(pMoveAwayFromBorderCondition);
+
 	//4. Create the finite state machine with a starting state and the blackboard
-	FiniteStateMachine* pStateMachine = new FiniteStateMachine(pWanderState, pBlackboard);
+	auto* pStateMachine = new FiniteStateMachine(pWanderState, pBlackboard);
+
 	//5. Add the transitions for the states to the state machine
 	// stateMachine->AddTransition(startState, toState, condition)
 	// startState: active state for which the transition will be checked
 	// condition: if the Evaluate function returns true => transition will fire and move to the toState
 	// toState: end state where the agent will move to if the transition fires
-	pStateMachine->AddTransition(pWanderState, pSeekFoodState, pFoodNearByCondition);
+	pStateMachine->AddTransition(pWanderState, pSeekFoodState, pSeekFoodCondition);
 
 	//6. Activate the decision making stucture on the custom agent by calling the SetDecisionMaking function
 	m_pCustomAgent->SetDecisionMaking(pStateMachine);
@@ -158,9 +179,9 @@ void App_AgarioGame::Render(float deltaTime) const
 	m_pCustomAgent->Render(deltaTime);
 }
 
-Blackboard* App_AgarioGame::CreateBlackboard(AgarioAgent* a)
+Elite::Blackboard* App_AgarioGame::CreateBlackboard(AgarioAgent* a)
 {
-	Blackboard* pBlackboard = new Blackboard();
+	Elite::Blackboard* pBlackboard = new Elite::Blackboard();
 	pBlackboard->AddData("Agent", a);
 	pBlackboard->AddData("FoodVec", &m_pFoodVec);
 	pBlackboard->AddData("FoodNearBy", static_cast<AgarioFood*>(nullptr));

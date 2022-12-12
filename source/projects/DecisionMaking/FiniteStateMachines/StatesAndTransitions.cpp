@@ -5,6 +5,10 @@ using namespace Elite;
 using namespace FSMStates;
 using namespace FSMConditions;
 
+#define FOOD_SEARCH_RADIUS 25
+#define FLEE_RADUIUS 8
+#define ENEMY_SEARCH_RADIUS 35
+
 void WanderState::OnEnter(Elite::Blackboard* pBlackboard)
 {
 	AgarioAgent* pAgent;
@@ -29,7 +33,7 @@ void SeekFoodState::OnEnter(Elite::Blackboard* pBlackboard)
 		return;
 
 	AgarioFood* pNearestFood;
-	isValid = pBlackboard->GetData("NearestFood", pNearestFood);
+	isValid = pBlackboard->GetData("FoodNearBy", pNearestFood);
 
 	if (isValid == false || pNearestFood == nullptr)
 		return;
@@ -80,46 +84,24 @@ void MoveAwayFromBorderState::Update(Elite::Blackboard* pBlackboard, float delta
 	if (isValid == false)
 		return;
 
-	const float wallSpacing{ 10 };
-	const float agentRadius{ pAgent->GetRadius() + wallSpacing };
+	const float agentRadius{ pAgent->GetRadius() };
 	const Vector2 agentPosition{ pAgent->GetPosition() };
 
-	Vector2 fleeTarget{ agentPosition };
-
-	if (agentPosition.x < agentRadius)
-	{
-		fleeTarget.x = worldSize;
-	}
-	else if (agentPosition.x + agentRadius > worldSize)
-	{
-		fleeTarget.x = 0.0f;
-	}
-
-	if (agentPosition.y < agentRadius)
-	{
-		fleeTarget.y = worldSize;
-	}
-	else if (agentPosition.y + agentRadius > worldSize)
-	{
-		fleeTarget.y = 0.0f;
-	}
+	const Vector2 fleeTarget{ 50,50 };
 	
-	pAgent->SetToFlee(fleeTarget);
+	pAgent->SetToSeek(fleeTarget);
 }
 
 
 
 
 
-#define FOOD_SEARCH_RADIUS 50
-#define ENEMY_SEARCH_RADIUS 20
 
 //=======================================
 //CONDITIONS
 //=======================================
 bool SeekFoodCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 {
-	const float foodRadius{ 40.f };
 	AgarioAgent* pAgent;
 	std::vector<AgarioFood*>* pFoodVec;
 
@@ -137,25 +119,26 @@ bool SeekFoodCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 		return false;
 	}
 
-	Vector2 agentPos{ pAgent->GetPosition() };
+	const Vector2 agentPos{ pAgent->GetPosition() };
 
-	auto elementdist = [agentPos](AgarioFood* pFood1, AgarioFood* pFood2) 
-	{ 
-		const float dist1 = agentPos.DistanceSquared(pFood1->GetPosition());
-		const float dist2 = agentPos.DistanceSquared(pFood2->GetPosition());
-		return dist1 < dist2;
-	};
-	const auto closestFoodIt = std::min_element(pFoodVec->begin(), pFoodVec->end(), elementdist);
+	AgarioFood* pClosestFood{ nullptr };
+	float closestFoodDistanceSquared{ FLT_MAX };
 
-	if (closestFoodIt != pFoodVec->end())
+	for (AgarioFood* pFood : *pFoodVec)
 	{
-		AgarioFood* pFood = *closestFoodIt;
-		
-		if (agentPos.DistanceSquared(pFood->GetPosition()) < foodRadius * foodRadius)
+		// The squared's don't fully work here and the math is kinda off, but it is not that bad (actually kinda good).
+		// The math is bad in the way that, as the agent gets bigger, its food search gets smaller.
+		// (more likely to search enemies which is good if agent is big)
+		if (agentPos.DistanceSquared(pFood->GetPosition()) - pAgent->GetRadius() * pAgent->GetRadius() < closestFoodDistanceSquared)
 		{
-			pBlackboard->ChangeData("FoodNearBy", pFood);
-			return true;
+			closestFoodDistanceSquared = agentPos.DistanceSquared(pFood->GetPosition());
 		}
+	}
+
+	if (closestFoodDistanceSquared <= FOOD_SEARCH_RADIUS * FOOD_SEARCH_RADIUS)
+	{
+		pBlackboard->ChangeData("FoodNearBy", pClosestFood);
+		return true;
 	}
 
 	return false;
@@ -173,7 +156,7 @@ bool EvadeBiggerAgentCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 	if (isValid == false || pAgentVector == nullptr)
 		return false;
 
-	const float radius{ pAgent->GetRadius() + ENEMY_SEARCH_RADIUS };
+	const float radius{ pAgent->GetRadius() + FLEE_RADUIUS };
 	const Vector2 agentPos{ pAgent->GetPosition() };
 
 	DEBUGRENDERER2D->DrawCircle(agentPos, radius, Color{ 1.0f, 0.0f, 0.0f, 1.0f }, 0.9f);
@@ -191,10 +174,7 @@ bool EvadeBiggerAgentCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 		if (distanceSquared > closestEnemyDistance)
 			continue;
 
-		if (pOtherAgent->GetRadius() < pAgent->GetRadius())
-			continue;
-
-		if (abs(pOtherAgent->GetRadius() - pAgent->GetRadius()) <= 1.1f)
+		if (pOtherAgent->GetRadius() - pAgent->GetRadius() <= 0.5f)
 			continue;
 
 		closestEnemyDistance = distanceSquared;
@@ -220,7 +200,7 @@ bool PursueSmallerAgentCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 	if (isValid == false || pAgentVector == nullptr)
 		return false;
 
-	const float radius{ pAgent->GetRadius() + FOOD_SEARCH_RADIUS };
+	const float radius{ pAgent->GetRadius() + ENEMY_SEARCH_RADIUS };
 	const Vector2 agentPos{ pAgent->GetPosition() };
 
 	DEBUGRENDERER2D->DrawCircle(agentPos, radius, Color{ 1.0f, 0.0f, 0.0f, 1.0f }, DEBUGRENDERER2D->NextDepthSlice());
@@ -267,7 +247,7 @@ bool MoveAwayFromBorderCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 	if (isValid == false)
 		return false;
 
-	const float agentRadius{ pAgent->GetRadius() + ENEMY_SEARCH_RADIUS };
+	const float agentRadius{ pAgent->GetRadius() - 3 };
 	const Vector2 agentPosition{ pAgent->GetPosition() };
 
 	bool isAgentNearWall{ agentPosition.x <= agentRadius };
@@ -276,4 +256,52 @@ bool MoveAwayFromBorderCondition::Evaluate(Elite::Blackboard* pBlackboard) const
 	isAgentNearWall = isAgentNearWall || (agentPosition.y >= worldSize - agentRadius);
 
 	return isAgentNearWall;
+}
+
+bool FSMConditions::WanderCondition::Evaluate(Elite::Blackboard* pBlackboard) const
+{
+	// THIS IS THE SAME CODE AS SEEKFOOD BUT THE TRUE'S ARE NOW FALSE AND VICE VERSA
+	// THIS IS THE SAME CODE AS SEEKFOOD BUT THE TRUE'S ARE NOW FALSE AND VICE VERSA
+	// THIS IS THE SAME CODE AS SEEKFOOD BUT THE TRUE'S ARE NOW FALSE AND VICE VERSA
+	//==============================================================================
+
+	AgarioAgent* pAgent;
+	std::vector<AgarioFood*>* pFoodVec;
+
+	bool isValid{ pBlackboard->GetData("Agent", pAgent) };
+
+	if (isValid == false || pAgent == nullptr)
+	{
+		return false;
+	}
+
+	isValid = pBlackboard->GetData("FoodVec", pFoodVec);
+
+	if (isValid == false || pFoodVec == nullptr)
+	{
+		return false;
+	}
+
+	const Vector2 agentPos{ pAgent->GetPosition() };
+
+	AgarioFood* pClosestFood{ nullptr };
+	float closestFoodDistanceSquared{ FLT_MAX };
+
+	for (AgarioFood* pFood : *pFoodVec)
+	{
+		// The squared's don't fully work here and the math is kinda off, but it is not that bad (actually kinda good).
+		// The math is bad in the way that, as the agent gets bigger, its food search gets smaller.
+		// (more likely to search enemies which is good if agent is big)
+		if (agentPos.DistanceSquared(pFood->GetPosition()) - pAgent->GetRadius() * pAgent->GetRadius() < closestFoodDistanceSquared)
+		{
+			closestFoodDistanceSquared = agentPos.DistanceSquared(pFood->GetPosition());
+		}
+	}
+
+	if (closestFoodDistanceSquared <= FOOD_SEARCH_RADIUS * FOOD_SEARCH_RADIUS)
+	{
+		return false;
+	}
+
+	return true;
 }

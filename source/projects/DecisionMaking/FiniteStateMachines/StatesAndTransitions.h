@@ -66,6 +66,14 @@ namespace FSMStates
 
 namespace FSMConditions
 {
+	class WanderCondition : public Elite::FSMCondition
+	{
+	public:
+		WanderCondition() : FSMCondition() {};
+		virtual bool Evaluate(Elite::Blackboard* pBlackboard) const override;
+	private:
+	};
+
 	class SeekFoodCondition : public Elite::FSMCondition
 	{
 	public:

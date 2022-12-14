@@ -52,17 +52,26 @@ BehaviorState BehaviorSequence::Execute(Blackboard* pBlackBoard)
 {
 	//TODO: FIll in this code
 	//Loop over all children in m_ChildBehaviors
-
+	for (auto& child : m_ChildBehaviors)
+	{
 		//Every Child: Execute and store the result in m_CurrentState
+		m_CurrentState = child->Execute(pBlackBoard);
 
 		//Check the currentstate and apply the sequence Logic:
-		//if a child returns Failed:
-			//stop looping over all children and return Failed
-		//if a child returns Running:
-			//Running: stop looping and return Running
-
-		//The selector succeeds if all children succeeded.
-
+		switch (m_CurrentState)
+		{
+			//if a child returns Failed:
+				//stop looping over all children and return Failed
+			case BehaviorState::Failure:
+			//if a child returns Running:
+				//Running: stop looping and return Running
+			case BehaviorState::Running:
+				return m_CurrentState;
+			//The selector succeeds if all children succeeded.
+			case BehaviorState::Success:
+				continue;
+		}
+	}
 	//All children succeeded 
 	m_CurrentState = BehaviorState::Success;
 	return m_CurrentState;

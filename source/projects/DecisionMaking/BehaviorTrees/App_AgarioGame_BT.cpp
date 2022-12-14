@@ -74,7 +74,7 @@ void App_AgarioGame_BT::Start()
 
 		//3. Set the BehaviorTree active on the agent 
 		newAgent->SetDecisionMaking(pBehaviorTree);
-		
+		newAgent->SetRenderBehavior(false);
 		
 		
 		m_pAgentVec.push_back(newAgent);
@@ -93,22 +93,65 @@ void App_AgarioGame_BT::Start()
 	Blackboard* pBlackboard = CreateBlackboard(m_pSmartAgent);
 
 	//2. Create BehaviorTree (make more conditions/actions and create a more advanced tree than the simple agents
-	BehaviorTree* pBehaviorTree = new BehaviorTree(pBlackboard,
-		new BehaviorSelector( // seek food or fallback to wander
+	//BehaviorTree* pBehaviorTree = new BehaviorTree(pBlackboard,
+	//	new BehaviorSelector( // seek food or fallback to wander
+	//		{
+	//			// try to seek food
+	//			new BehaviorSequence
+	//			({
+	//				new BehaviorConditional(BT_Conditions::IsFoodNearby),
+	//				new BehaviorAction(BT_Actions::ChangeToSeek)
+	//			}),
+	//		// fallback to wander
+	//		new BehaviorAction(BT_Actions::ChangeToWander)
+	//		} 
+	//));
+
+	BehaviorTree* pBehaviorTree{
+	new BehaviorTree{ pBlackboard,
+		new BehaviorSelector
+		{
+			std::vector<Elite::IBehavior*>
 			{
-				// try to seek food
+				//FLEE
 				new BehaviorSequence
-				({
-					new BehaviorConditional(BT_Conditions::IsFoodNearby),
-					new BehaviorAction(BT_Actions::ChangeToSeek)
-				}),
-			// fallback to wander
-			new BehaviorAction(BT_Actions::ChangeToWander)
-			} 
-	));
+				{
+					std::vector<Elite::IBehavior*>
+					{
+						new BehaviorConditional{ BT_Conditions::IsBiggerEnemyNearby },
+						new BehaviorAction{ BT_Actions::ChangeToFlee }
+					}
+				},
+				//CHASE
+				new BehaviorSequence
+				{
+					std::vector<Elite::IBehavior*>
+					{
+						new BehaviorConditional{ BT_Conditions::IsSmallerEnemyNearby },
+						new BehaviorAction{ BT_Actions::ChangeToSeek }
+					}
+				},
+				//FOOD
+				new BehaviorSequence
+				{
+					std::vector<Elite::IBehavior*>
+					{
+						new BehaviorConditional{ BT_Conditions::IsFoodNearby  },
+						new BehaviorAction{ BT_Actions::ChangeToSeek }
+					}
+				},
+				//WANDER
+				new BehaviorAction{ BT_Actions::ChangeToWander }
+			}
+		}
+	}
+	};
 
 	//3. Set the BehaviorTree active on the agent 
 	m_pSmartAgent->SetDecisionMaking(pBehaviorTree);
+	m_pSmartAgent->SetRenderBehavior(true);
+
+	//m_pAgentVec.push_back(m_pSmartAgent);
 }
 
 void App_AgarioGame_BT::Update(float deltaTime)

@@ -18,6 +18,9 @@
 // Behaviors
 //-----------------------------------------------------------------
 
+#define FLEE_RADIUS 20
+#define ATTACK_RADIUS 40
+
 namespace BT_Actions
 {
 	Elite::BehaviorState ChangeToWander(Elite::Blackboard* pBlackboard)
@@ -46,6 +49,23 @@ namespace BT_Actions
 		}
 
 		pAgent->SetToSeek(targetPos);
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState ChangeToFlee(Elite::Blackboard* pBlackboard)
+	{
+		AgarioAgent* pAgent;
+		Elite::Vector2 FleeTargetPos;
+		if (!pBlackboard->GetData("Agent", pAgent) || pAgent == nullptr)
+		{
+			return Elite::BehaviorState::Failure;
+		}
+		if (!pBlackboard->GetData("FleeTarget", FleeTargetPos))
+		{
+			return Elite::BehaviorState::Failure;
+		}
+
+		pAgent->SetToFlee(FleeTargetPos);
 		return Elite::BehaviorState::Success;
 	}
 }
@@ -88,6 +108,99 @@ namespace BT_Conditions
 			return true;
 		}
 		return false;
+	}
+
+	bool IsSmallerEnemyNearby(Elite::Blackboard* pBlackboard)
+	{
+		AgarioAgent* pAgent;
+		std::vector<AgarioAgent*>* pAgentsVec;
+		if (!pBlackboard->GetData("Agent", pAgent) || pAgent == nullptr)
+		{
+			return false;
+		}
+		if (!pBlackboard->GetData("AgentsVec", pAgentsVec) || pAgentsVec == nullptr)
+		{
+			return false;
+		}
+
+		const float attackRadius{ pAgent->GetRadius() + ATTACK_RADIUS };
+		const Elite::Vector2 agentPos{ pAgent->GetPosition() };
+
+		DEBUGRENDERER2D->DrawCircle(agentPos, attackRadius, { 0.0f, 1.0f, 1.0f, 1.0f }, DEBUGRENDERER2D->NextDepthSlice());
+
+		AgarioAgent* closestSmallerEnemy{ nullptr };
+		float closestDistSq{ attackRadius * attackRadius };
+
+		for (AgarioAgent* pOtherAgent : *pAgentsVec)
+		{
+			if (pOtherAgent == nullptr)
+				continue;
+			else if (pOtherAgent == pAgent)
+				continue;
+
+			const float distSquared{ pOtherAgent->GetPosition().DistanceSquared(agentPos) };
+
+			if (distSquared > closestDistSq)
+				continue;
+
+			if (pAgent->GetRadius() - pOtherAgent->GetRadius() > 1.5f)
+			{
+				closestSmallerEnemy = pOtherAgent;
+				closestDistSq = distSquared;
+			}
+		}
+
+		if (closestSmallerEnemy == nullptr)
+			return false;
+
+		pBlackboard->ChangeData("Target", closestSmallerEnemy->GetPosition());
+		return true;
+	}
+
+	bool IsBiggerEnemyNearby(Elite::Blackboard* pBlackboard)
+	{
+		AgarioAgent* pAgent;
+		std::vector<AgarioAgent*>* pAgentVector;
+		if (!pBlackboard->GetData("Agent", pAgent) || pAgent == nullptr)
+		{
+			return false;
+		}
+		if (!pBlackboard->GetData("AgentsVec", pAgentVector) || pAgentVector == nullptr)
+		{
+			return false;
+		}
+
+		const float fleeRadius{ pAgent->GetRadius() + FLEE_RADIUS };
+		const Elite::Vector2 agentPos{ pAgent->GetPosition() };
+
+		DEBUGRENDERER2D->DrawCircle(agentPos, fleeRadius, { 1.0f, 0.0f, 0.0f, 1.0f }, DEBUGRENDERER2D->NextDepthSlice());
+
+		AgarioAgent* closestBiggerEnemy{ nullptr };
+		float closestDistSq{ fleeRadius * fleeRadius };
+
+		for (AgarioAgent* pOtherAgent : *pAgentVector)
+		{
+			if (pOtherAgent == nullptr)
+				continue;
+			if (pOtherAgent == pAgent)
+				continue;
+
+			const float distSquared{ pOtherAgent->GetPosition().DistanceSquared(agentPos) };
+
+			if (distSquared > closestDistSq)
+				continue;
+
+			if (pOtherAgent->GetRadius() - pAgent->GetRadius() > 1.5f)
+			{
+				closestBiggerEnemy = pOtherAgent;
+				closestDistSq = distSquared;
+			}
+		}
+
+		if (closestBiggerEnemy == nullptr) return false;
+
+		pBlackboard->ChangeData("FleeTarget", closestBiggerEnemy);
+		return true;
 	}
 }
 

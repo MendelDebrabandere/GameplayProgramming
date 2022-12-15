@@ -50,6 +50,60 @@ namespace Elite
 	void InfluenceMap<T_GraphType>::PropagateInfluence(float deltaTime)
 	{
 		// TODO: implement
+		m_TimeSinceLastPropagation += deltaTime;
+
+		if (m_TimeSinceLastPropagation >= m_PropagationInterval)
+		{
+			m_TimeSinceLastPropagation -= m_PropagationInterval;
+
+			m_InfluenceDoubleBuffer.clear();
+			m_InfluenceDoubleBuffer.reserve(100);
+
+			// setting up variables to use later
+			constexpr int sizeOfGrid{ 10 };
+			constexpr float sqrtOf2{ 1.41421356237f };
+
+			// looping over all nodes
+			//for (int idx{}; idx < m_InfluenceDoubleBuffer.size(); ++idx)
+			//{
+			for (auto& pNode : m_Nodes)
+			{
+				float newInfluence{ 0 };
+
+				for (auto connection: GetNodeConnections(pNode->GetIndex()))
+				{
+					InfluenceNode* otherNode{};
+					if (connection->GetTo() == pNode->GetIndex())
+					{
+						otherNode = GetNode(connection->GetFrom());
+					}
+					else
+					{
+						otherNode = GetNode(connection->GetTo());
+					}
+
+					const float tempNewInfluence{ otherNode->GetInfluence() * expf(-connection->GetCost() * m_Decay) };
+
+					if (abs(tempNewInfluence) >= abs(newInfluence))
+						newInfluence = tempNewInfluence;
+				}
+
+				const float value{ Lerp(pNode->GetInfluence(), newInfluence, m_Momentum) };
+
+				m_InfluenceDoubleBuffer.push_back(value);
+
+			}
+
+			
+			int counter{};
+			for (auto& pNode : m_Nodes)
+			{
+				pNode->SetInfluence(m_InfluenceDoubleBuffer[counter]);
+				++counter;
+			}
+
+		}
+
 	}
 
 	template <class T_GraphType>

@@ -10,8 +10,8 @@
 //#define ActiveApp_PathfindingAStar
 //#define ActiveApp_NavMeshGraph
 //#define ActiveApp_FSM
-#define ActiveApp_BehaviorTree
-//#define ActiveApp_InfluenceMap
+//#define ActiveApp_BehaviorTree
+#define ActiveApp_InfluenceMap
 
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox

@@ -34,13 +34,9 @@ BehaviorState BehaviorSelector::Execute(Blackboard* pBlackBoard)
 		{
 		case BehaviorState::Failure:
 			continue;
-			break;
 		case BehaviorState::Running:
-			return m_CurrentState;
-			break;
 		case BehaviorState::Success:
 			return m_CurrentState;
-			break;
 		}
 	}
 	//All children failed

@@ -3,7 +3,7 @@
 // Create the define here using the "ActiveApp_..." convention and set up the correct include and typedef in the #ifdef below.
 
 //#define ActiveApp_Sandbox
-//#define ActiveApp_Steering
+#define ActiveApp_Steering
 //#define ActiveApp_CombinedSteering
 //#define ActiveApp_Flocking
 //#define ActiveApp_GraphTheory
@@ -11,7 +11,7 @@
 //#define ActiveApp_NavMeshGraph
 //#define ActiveApp_FSM
 //#define ActiveApp_BehaviorTree
-#define ActiveApp_InfluenceMap
+//#define ActiveApp_InfluenceMap
 
 //---------- Registered Applications -----------
 #ifdef ActiveApp_Sandbox
